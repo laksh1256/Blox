@@ -1,0 +1,85 @@
+Question - There is an API that one must call to get data. The trouble is it will not let you cross the
+limit of call - say 15 calls per minute. If you cross the limit, the system penalizes you by one
+additional minute of penalty where you can not make any call. Here is how the API looks
+like: function string call_me(string input).
+Propose a solution by which:
+1. You would be able to use the API within the safe limit.
+2. What happens if you are supposed to call the API 20 times per minute? Is there
+any way to accomplish this?
+3. If you were the API designer, what would you do to implement this behavior?
+
+Solution - 
+
+We can use either of Token Bucket algorithm or sliding window algorithm to take care of this.
+
+To handle 20 calls per minute without violating the rate limit:
+
+We can distribute the 20 calls over two minutes:
+15 calls in the first minute.
+5 calls in the second minute.
+This can be achieved using a queue to manage the calls and a scheduling mechanism to distribute them over time.
+
+Here’s an implementation using Queue and Thread:
+
+import time
+from queue import Queue
+from threading import Thread, Lock
+
+# Mock implementation of the API call
+def call_me(input_data):
+    print(f"API called with input: {input_data}")
+    return f"Response for {input_data}"
+
+# Rate limiter class
+class RateLimiter:
+    def __init__(self, max_calls, period):
+        self.max_calls = max_calls      # Maximum allowed calls within the period
+        self.period = period            # Period duration in seconds (60 seconds for 1 minute)
+        self.call_times = []            # Keeps track of timestamps of API calls
+        self.lock = Lock()              # Ensure thread safety for multiple threads
+
+    def can_call(self):
+        with self.lock:
+            current_time = time.time()
+
+            # Remove timestamps older than the current period
+            self.call_times = [timestamp for timestamp in self.call_times if current_time - timestamp < self.period]
+
+            # Check if we are within the rate limit
+            return len(self.call_times) < self.max_calls
+
+    def make_call(self, input_data):
+        if self.can_call():
+            with self.lock:
+                self.call_times.append(time.time())  # Record the timestamp of the API call
+            return call_me(input_data)
+        else:
+            return "Rate limit exceeded. Please wait."
+
+def rate_limited_api_caller(rate_limiter, call_queue):
+    """Process calls from the queue respecting the rate limiter."""
+    while not call_queue.empty():
+        input_data = call_queue.get()
+        result = rate_limiter.make_call(input_data)
+        print(result)
+        # Introduce a short sleep to avoid busy-waiting and respect rate limiting
+        time.sleep(1)
+
+# Create a queue with 20 API calls
+call_queue = Queue()
+for i in range(20):
+    call_queue.put(f"Test input {i}")
+
+# Use a separate thread to process the API calls with rate limiting
+caller_thread = Thread(target=rate_limited_api_caller, args=(rate_limiter, call_queue))
+caller_thread.start()
+caller_thread.join()
+
+# Initialize a rate limiter for 15 calls/minute
+rate_limiter = RateLimiter(max_calls=15, period=60)
+
+# Example usage
+for i in range(20):  # Try to make 20 API calls
+    result = rate_limiter.make_call(f"Test input {i}")
+    print(result)
+    time.sleep(2)  # Wait for 2 seconds between each call to demonstrate rate limiting
