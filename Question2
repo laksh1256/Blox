@@ -1,0 +1,85 @@
+Question - There is one database. Let’s say it is hosted locally and one of the team members migrates it
+to AWS or GCP. How can one confirm that the copied data is the same as the original data ?
+What would be the check points ?
+Imagine that data from table is of the form : List<Map<String,String>>
+
+Solution - 
+
+Here’s a Python script using pandas and boto3 to validate data between a local SQL database and data in Redshift.
+
+import pandas as pd
+import psycopg2
+import boto3
+import hashlib
+
+def get_local_data(query, conn_params):
+    """Fetch data from local SQL database and return as pandas DataFrame."""
+    conn = psycopg2.connect(**conn_params)
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
+
+def get_redshift_data(query, conn_params):
+    """Fetch data from Redshift and return as pandas DataFrame."""
+    conn = psycopg2.connect(**conn_params)
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
+
+def generate_row_hashes(df):
+    """Generate hash values for each row in the DataFrame."""
+    # Create a concatenated string of all columns and compute hash
+    df['row_hash'] = df.apply(lambda row: hashlib.md5(row.astype(str).sum().encode()).hexdigest(), axis=1)
+    return df
+
+def compare_dataframes(df1, df2):
+    """Compare two dataframes and print mismatched rows if any."""
+    if len(df1) != len(df2):
+        print(f"Row count mismatch: {len(df1)} rows in source vs {len(df2)} rows in destination")
+        return False
+
+    merged_df = df1.merge(df2, on='row_hash', how='outer', indicator=True)
+    mismatches = merged_df[merged_df['_merge'] != 'both']
+    if not mismatches.empty:
+        print("Data mismatch found:")
+        print(mismatches)
+        return False
+
+    print("Data is in sync!")
+    return True
+
+def main():
+    # Connection parameters for local SQL database
+    local_conn_params = {
+        'dbname': 'your_local_db',
+        'user': 'your_user',
+        'password': 'your_password',
+        'host': 'localhost',
+        'port': '5432'
+    }
+
+    # Connection parameters for Redshift
+    redshift_conn_params = {
+        'dbname': 'your_redshift_db',
+        'user': 'your_redshift_user',
+        'password': 'your_redshift_password',
+        'host': 'your-redshift-endpoint',
+        'port': '5439'
+    }
+
+    # Step 1: Fetch data from local SQL
+    query = "SELECT * FROM schema_name.table_name"
+    local_df = get_local_data(query, local_conn_params)
+
+    # Step 2: Fetch data from Redshift
+    redshift_df = get_redshift_data(query, redshift_conn_params)
+
+    # Step 3: Generate row hashes
+    local_df = generate_row_hashes(local_df)
+    redshift_df = generate_row_hashes(redshift_df)
+
+    # Step 4: Compare data
+    compare_dataframes(local_df, redshift_df)
+
+if __name__ == "__main__":
+    main()
