@@ -1,0 +1,62 @@
+Question - Write a function to parse any valid json string into a corresponding Object, List, or Map
+object. You can use C,C++, Java, Scala, Kotlin, Python, Node. Note that the integer and
+floating point should be arbitrary precision.
+
+Solution - 
+
+import org.json.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.*;
+
+public class JSONParser {
+
+    public static Object parseJson(String json) {
+        if (json.trim().startsWith("{")) {
+            return parseJsonObject(new JSONObject(json));
+        } else if (json.trim().startsWith("[")) {
+            return parseJsonArray(new JSONArray(json));
+        } else {
+            throw new IllegalArgumentException("Invalid JSON input");
+        }
+    }
+
+    private static Map<String, Object> parseJsonObject(JSONObject jsonObject) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (String key : jsonObject.keySet()) {
+            Object value = jsonObject.get(key);
+            map.put(key, convertJsonValue(value));
+        }
+        return map;
+    }
+
+    private static List<Object> parseJsonArray(JSONArray jsonArray) {
+        List<Object> list = new ArrayList<>();
+        for (Object value : jsonArray) {
+            list.add(convertJsonValue(value));
+        }
+        return list;
+    }
+
+    private static Object convertJsonValue(Object value) {
+        if (value instanceof JSONObject) {
+            return parseJsonObject((JSONObject) value);
+        } else if (value instanceof JSONArray) {
+            return parseJsonArray((JSONArray) value);
+        } else if (value instanceof BigInteger || value instanceof BigDecimal) {
+            return value;
+        } else if (value instanceof Number) {
+            return new BigDecimal(value.toString());
+        } else if (value == JSONObject.NULL) {
+            return null;
+        } else {
+            return value;
+        }
+    }
+
+    public static void main(String[] args) {
+        String json = "{\"name\":\"John\",\"age\":30,\"height\":5.75,\"numbers\":[1,2,3], \"bigNumber\": 12345678901234567890 }";
+        Object parsedResult = parseJson(json);
+        System.out.println(parsedResult);
+    }
+}
