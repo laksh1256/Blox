@@ -1,0 +1,48 @@
+ Realtime Multi Client Web Chat App
+a. What did the system do? 
+  The system is a real-time chat application that allows multiple users to engage in conversations simultaneously. It leverages Socket.io to ensure 
+  real-time message communication among all connected clients.
+b. What other systems have you seen in the wild like that? 
+  Similar systems include Slack, Discord, Microsoft Teams, and WhatsApp Web. They all use WebSockets or similar technologies for real-time messaging.
+c. How do you approach the development problem? 
+  The approach involved designing a simple yet scalable architecture. I broke down the problem into frontend (using HTML/CSS) and backend (Node.js and Express.js) 
+  components. The critical challenge was ensuring real-time message broadcasting to multiple clients, which was addressed using the Socket.io library.
+d. What were interesting aspects where you copied code from Stack Overflow? 
+   One interesting part was implementing the WebSocket connection using Socket.io. While I understood the theory, I consulted Stack Overflow for code
+   snippets to handle disconnections and reconnections more gracefully, ensuring a smoother user experience.
+e. What did you learn from some very specific copy-paste? 
+   Specifically, I learned how to handle error events in Socket.io. By copying a snippet on handling 'connection failed' scenarios, I 
+   gained insights into more robust WebSocket management, such as automatic reconnection and ensuring event listeners are properly 
+   removed when clients disconnect.
+
+
+
+Here is a detailed explanation of a key project  worked on at Paytm
+
+Settlement Module (Backend Microservice using Spring Boot)
+a. What did the system do?
+   The settlement module is a backend microservice that automates the process of settling payments between different parties, such as
+   merchants and customers. It handles thousands of settlement requests, ensuring that all payments are processed accurately and on time without
+   causing any downtime to the system. This was integrated into the existing Paytm platform using proxy API calls to facilitate smooth communication between services.
+
+b. What other systems have you seen in the wild like that? 
+   Similar systems can be found in digital payment services like Stripe, Razorpay, and PayPal, where real-time settlement of transactions between 
+  customers and merchants is crucial. These systems also employ microservice architectures to ensure scalability and reliability in handling large transaction volumes.
+
+c. How did you approach the development problem? 
+  The approach began with gathering requirements by collaborating with multiple cross-functional teams to understand the business needs and the
+  settlement process. The development process followed these steps:
+
+   Modular Design: The settlement process was broken into smaller components such as request validation, transaction processing, and settlement completion.
+   Spring Boot and Microservices: Spring Boot was chosen to develop the microservice due to its simplicity in creating standalone applications with embedded servers, making it ideal for microservice architectures.
+    API Integration: The settlement module was integrated into the existing Paytm platform using proxy API calls, ensuring that the new functionality could be seamlessly added without interrupting the ongoing operations.
+   Testing and Scalability: Achieved 95% code coverage through extensive unit tests to ensure reliability and performance. This was important given the volume of over 10,000 settlement requests processed in the first three months.
+d. What were interesting aspects where you copied code from Stack Overflow? 
+  One interesting aspect where I consulted Stack Overflow was the implementation of efficient logging for distributed systems. 
+  Since the microservice was integrated into a larger platform, I needed to ensure that logging for transactions was robust and traceable. I found useful snippets on how to structure logs and capture all relevant details using tools like Kibana and Elasticsearch for easier debugging and monitoring.
+
+e. What did you learn from some very specific copy-paste? 
+   I learned how to implement a circuit breaker pattern to handle API failures gracefully. 
+   By copying an example on how to use Spring Cloud’s Circuit Breaker, I was able to build a resilient system that could automatically fall back in case any external service (like the proxy API) was unavailable. This improved the system's reliability and ensured that users experienced minimal disruptions during settlement processes.
+
+This project demonstrated not only your expertise in building scalable microservices but also your ability to integrate new functionality into an existing, complex system without causing downtime.
